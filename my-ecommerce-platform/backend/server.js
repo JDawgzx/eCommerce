@@ -1,21 +1,26 @@
 const express = require('express');
-const cors = require('cors'); // CORS middleware
-const app = express();  // Declare the app variable here (only once)
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const productRoutes = require('./routes/productRoutes');
 
-const port = 5000;
+dotenv.config();
+const app = express();
 
-// Enable CORS for all routes
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-app.get('/products', (req, res) => {
-    // Dummy data for now
-    const products = [
-      { id: 1, name: 'Product 1', price: 100 },
-      { id: 2, name: 'Product 2', price: 200 }
-    ];
-    res.json(products);
-  });
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.log('MongoDB connection error:', err));
 
+// Routes
+app.use('/api/products', productRoutes);
+
+// Start the server
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
