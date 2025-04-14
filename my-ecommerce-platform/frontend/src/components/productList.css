@@ -1,0 +1,32 @@
+.product-list {
+	padding: 1rem;
+}
+
+.product-list h2 {
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+}
+
+.product-card {
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+	transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+	transform: scale(1.02);
+	background-color: #f9f9f9;
+}
+
+.product-card h3 {
+	font-size: 1.2rem;
+	margin-bottom: 0.5rem;
+}
+
+.product-card p {
+	margin: 0.25rem 0;
+	color: #555;
+}
