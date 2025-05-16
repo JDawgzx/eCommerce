@@ -13,7 +13,7 @@ exports.getAllProducts = async (req, res) => {
 // Controller to create a product
 exports.createProduct = async (req, res) => {
   const { name, description, price, image } = req.body;
-
+np
   try {
     const product = new Product({ name, description, price, image });
     await product.save();

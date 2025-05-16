@@ -3,13 +3,19 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const productRoutes = require('./routes/productRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
 
 dotenv.config();
 const app = express();
+const authRoutes = require('./routes/authRoutes'); // <- import the route
+
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })

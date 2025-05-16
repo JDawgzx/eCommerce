@@ -1,6 +1,6 @@
 // seed.js
 const mongoose = require('mongoose');
-const Product = require('./models/Product'); // adjust path if needed
+const Product = require('../models/Product'); // adjust path if needed
 require('dotenv').config();
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce';

@@ -8,6 +8,7 @@
 }
 
 .product-card {
+	background-color: #ffffff; /* same blue as navbar */
 	border: 1px solid #ddd;
 	border-radius: 8px;
 	padding: 1rem;
@@ -17,8 +18,9 @@
 }
 
 .product-card:hover {
-	transform: scale(1.02);
-	background-color: #f9f9f9;
+  background-color: #007bff; /* darker blue */
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .product-card h3 {
@@ -28,5 +30,6 @@
 
 .product-card p {
 	margin: 0.25rem 0;
-	color: #555;
+	/*color: #555;*/
 }
+    
