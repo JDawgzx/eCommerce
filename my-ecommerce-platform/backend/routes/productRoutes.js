@@ -1,12 +1,47 @@
-// backend/routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { authMiddleware, ownerOnly } = require('../middleware/auth'); // <-- import auth middlewares
 
-// GET all products
+// Setup multer for image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = 'uploads/';
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // e.g. 1623456789.jpg
+  }
+});
+
+const upload = multer({ storage });
+
+// GET all products with search & filters (public)
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find();
+    const { search, category, minPrice, maxPrice } = req.query;
+    const filter = {};
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (category) {
+      filter.category = category;
+    }
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    const products = await Product.find(filter);
     res.json(products);
   } catch (err) {
     console.error('Error fetching products:', err);
@@ -14,7 +49,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET a single product by ID (optional)
+// GET product by ID (public)
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -26,11 +61,21 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create a new product (optional, e.g., for admins)
-router.post('/', async (req, res) => {
+// POST create new product with image upload (protected + owner only)
+router.post('/', authMiddleware, ownerOnly, upload.single('image'), async (req, res) => {
   try {
-    const { name, description, price } = req.body;
-    const newProduct = new Product({ name, description, price });
+    const { name, description, price, category, inStock } = req.body;
+    const image = req.file ? `/${req.file.path.replace(/\\/g, '/')}` : undefined;
+
+    const newProduct = new Product({
+      name,
+      description,
+      price,
+      category,
+      inStock: inStock === 'true' || inStock === true,
+      image,
+    });
+
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (err) {
@@ -39,15 +84,22 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT update a product (optional)
-router.put('/:id', async (req, res) => {
+// PUT update product with optional image upload (protected + owner only)
+router.put('/:id', authMiddleware, ownerOnly, upload.single('image'), async (req, res) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updateData = { ...req.body };
+
+    if (req.file) {
+      updateData.image = `/${req.file.path.replace(/\\/g, '/')}`;
+    }
+
+    if (updateData.inStock !== undefined) {
+      updateData.inStock = updateData.inStock === 'true' || updateData.inStock === true;
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
+
     res.json(updatedProduct);
   } catch (err) {
     console.error('Error updating product:', err);
@@ -55,8 +107,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE a product (optional)
-router.delete('/:id', async (req, res) => {
+// DELETE product (protected + owner only)
+router.delete('/:id', authMiddleware, ownerOnly, async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
     if (!deletedProduct) return res.status(404).json({ message: 'Product not found' });

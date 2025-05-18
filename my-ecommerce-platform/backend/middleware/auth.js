@@ -1,16 +1,26 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'No token' });
+const authMiddleware = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]; // Bearer token
+  if (!token) return res.status(401).json({ message: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { id, role }
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(401).json({ message: 'User not found' });
+    req.user = user;
     next();
-  } catch {
+  } catch (err) {
     res.status(401).json({ message: 'Invalid token' });
   }
 };
 
-module.exports = authMiddleware;
+const ownerOnly = (req, res, next) => {
+  if (req.user.role !== 'owner') {
+    return res.status(403).json({ message: 'Forbidden: Owners only' });
+  }
+  next();
+};
+
+module.exports = { authMiddleware, ownerOnly };
